@@ -119,8 +119,9 @@ void setup() {
 
   ELECHOUSE_cc1101.Init();
   ELECHOUSE_cc1101.setMHZ(433.92);    // Frequency
-  ELECHOUSE_cc1101.setDRate(4.8);     // ELRO 800 bitrate
+  ELECHOUSE_cc1101.setDRate(4.8);     // Typical bitrate
   ELECHOUSE_cc1101.setModulation(2);  // OOK mode
+  ELECHOUSE_cc1101.setPA(10);         // set power amplifier to 10dBm max
   ELECHOUSE_cc1101.setRxBW(203);      // Narrow RX bandwidth
   ELECHOUSE_cc1101.SetRx();           // Start RX
   Serial.println("CC1101 configured correctly!");
