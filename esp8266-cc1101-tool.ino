@@ -1,7 +1,3 @@
-// #include <ELECHOUSE_CC1101_SRC_DRV.h>
-// #include <ESPiLight.h>
-
-
 #include "src/ESPiLight/src/ESPiLight.h"
 #include "src/SmartRC-CC1101-Driver-Lib/ELECHOUSE_CC1101_SRC_DRV.h"
 
@@ -20,6 +16,7 @@
 // GND - GND
 
 #define CC1101_GDO0 4
+#define LED_PIN 2
 
 ESPiLight rf(CC1101_GDO0);
 
@@ -74,39 +71,69 @@ void rfCallback(const String &protocol, const String &message, int status,
   }
 }
 
+// this will reflect rf activity on led, so even if protocol is not understood the led will light up during RX
+void showActivity(void)
+{
+    #ifdef LED_PIN
+      if (digitalRead(CC1101_GDO0) == HIGH) {
+          digitalWrite(LED_PIN, LOW);
+      } 
+      else {
+          digitalWrite(LED_PIN, HIGH);
+      }
+    #endif
+}
+
 void receive(void) {
   ccMode = RX_MODE;
 
   pinMode(CC1101_GDO0, INPUT);  // GDO0 drives RX interrupt
-  delay(50);
-  rf.setCallback(rfCallback);
-  delay(50);
-  rf.initReceiver(CC1101_GDO0);
-  delay(50);
+  delay(10);
 
-  delay(50);
-
+  // Setup CC1101 and init RX
+  ELECHOUSE_cc1101.Init();
+  ELECHOUSE_cc1101.setMHZ(433.92);    // Frequency
+  ELECHOUSE_cc1101.setDRate(4.8);     // Typical bitrate
+  ELECHOUSE_cc1101.setModulation(2);  // OOK mode
+  ELECHOUSE_cc1101.setPA(10);         // set power amplifier to 10dBm max
+  ELECHOUSE_cc1101.setRxBW(203);      // Narrow RX bandwidth
   ELECHOUSE_cc1101.SetRx();  // put radio in receive mode
-  delay(5);
+  delay(10);
+
+  rf.setCallback(rfCallback);
+  rf.initReceiver(CC1101_GDO0);
 }
 
 void transmit(void) {
   ccMode = TX_MODE;
   rf.disableReceiver();
-  delay(50);
+  delay(10);
+
+  #ifdef LED_PIN
+    digitalWrite(LED_PIN, LOW);
+  #endif
 
   detachInterrupt(digitalPinToInterrupt(CC1101_GDO0));  // detach interrupt
   pinMode(CC1101_GDO0, OUTPUT);                         // drive TX pulses manually
   digitalWrite(CC1101_GDO0, LOW);                       // put low
+  delay(10);
 
-  delay(50);
   ELECHOUSE_cc1101.SetTx();  // put radio in transmit mode
-  delay(50);
+  delay(10);
 }
 
 void setup() {
+  #ifdef LED_PIN
+    pinMode(LED_PIN, OUTPUT);                        
+    digitalWrite(LED_PIN, LOW);     
+  #endif
+
   Serial.begin(115200);
   delay(500);
+
+  #ifdef LED_PIN
+    digitalWrite(LED_PIN, HIGH);     
+  #endif
 
   // ELECHOUSE_cc1101.SetTx();  // cc1101 set Transmit on
   if (ELECHOUSE_cc1101.getCC1101()) {  // Check the CC1101 Spi connection.
@@ -117,20 +144,13 @@ void setup() {
 
   Serial.println("Configuring CC1101...");
 
-  ELECHOUSE_cc1101.Init();
-  ELECHOUSE_cc1101.setMHZ(433.92);    // Frequency
-  ELECHOUSE_cc1101.setDRate(4.8);     // Typical bitrate
-  ELECHOUSE_cc1101.setModulation(2);  // OOK mode
-  ELECHOUSE_cc1101.setPA(10);         // set power amplifier to 10dBm max
-  ELECHOUSE_cc1101.setRxBW(203);      // Narrow RX bandwidth
-  ELECHOUSE_cc1101.SetRx();           // Start RX
+  receive();
+
   Serial.println("CC1101 configured correctly!");
 
   Serial.println("Received codes will show up here");
 
   Serial.println("To send any code you can enter valid ESPiLight command ie: [elro_800_switch] {\"systemcode\":1,\"unitcode\":2,\"off\":1}");
-
-  receive();
 }
 
 void sendBurst(void) {
@@ -147,17 +167,17 @@ void sendBurst(void) {
   Serial.print(protocol);
   Serial.print("] ");
   Serial.println(message);
-  delay(50);
 
   transmit();
-  delay(500);
+  delay(20);
+  // keep sending code for 3 seconds
   while (millis() - start < 3000) {
     rf.send(protocol.c_str(), message.c_str());
-    delay(5);
+    delay(5); // small gaps like real remote
   }
 
   receive();
-  delay(100);
+  delay(20);
 
   Serial.println("TRANSMITTING DONE. RX MODE ON.");
 }
@@ -169,6 +189,8 @@ void loop() {
     delay(2);
   }
 
+  // show any RX activity even if not understood - carrier detection
+  showActivity();
 
   // read serial input if available
   while (Serial.available() > 0) {
