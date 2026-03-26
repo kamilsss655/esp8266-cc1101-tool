@@ -17,12 +17,19 @@
 
 #define CC1101_GDO0 4
 #define LED_PIN 2
+// #define DEBUG_MODE 1 // shows all packets
 
 ESPiLight rf(CC1101_GDO0);
 
 enum CC1101Mode { RX_MODE,
                   TX_MODE };
-CC1101Mode ccMode = RX_MODE;
+CC1101Mode ccMode = RX_MODE; // current mode
+
+enum CC1101Band {
+  BAND_433,
+  BAND_868
+};
+CC1101Band ccBand = BAND_868; // current band
 
 // Buffer to hold last received command
 String lastCmd = "";
@@ -45,30 +52,27 @@ bool parseCommand(const String &input, String &protocol, String &message) {
 // callback function. It is called on successfully received and parsed rc signal
 void rfCallback(const String &protocol, const String &message, int status,
                 size_t repeats, const String &deviceID) {
-  // Serial.print("RF signal arrived [");
-  // Serial.print(protocol);  // protocoll used to parse
-  // Serial.print("][");
-  // Serial.print(deviceID);  // value of id key in json message
-  // Serial.print("] (");
-  // Serial.print(status);  // status of message, depending on repeat, either:
-  //                        // FIRST   - first message of this protocoll within the
-  //                        //           last 0.5 s
-  //                        // INVALID - message repeat is not equal to the
-  //                        //           previous message
-  //                        // VALID   - message is equal to the previous message
-  //                        // KNOWN   - repeat of a already valid message
-  // Serial.print(") ");
-  // Serial.print(message);  // message in json format
-  // Serial.println();
 
-  // check if message is valid and process it
-  if (status == VALID) {
-    Serial.print("Valid message: [");
+  #ifdef DEBUG_MODE
+    Serial.print("RX: [");
     Serial.print(protocol);
     Serial.print("] ");
     Serial.print(message);
     Serial.println();
-  }
+  #else // show VALID or FIRST message only by default to prevent spam
+  // status:
+  // FIRST   - first message of this protocoll within the last 0.5 s
+  // INVALID - message repeat is not equal to the previous message
+  // VALID   - message is equal to the previous message
+  // KNOWN   - repeat of a already valid message
+    if (status == VALID || status == FIRST) {
+      Serial.print("RX: [");
+      Serial.print(protocol);
+      Serial.print("] ");
+      Serial.print(message);
+      Serial.println();
+    }
+  #endif
 }
 
 // this will reflect rf activity on led, so even if protocol is not understood the led will light up during RX
@@ -89,14 +93,38 @@ void receive(void) {
 
   pinMode(CC1101_GDO0, INPUT);  // GDO0 drives RX interrupt
   delay(10);
+  ELECHOUSE_cc1101.Init();
 
   // Setup CC1101 and init RX
-  ELECHOUSE_cc1101.Init();
-  ELECHOUSE_cc1101.setMHZ(433.92);    // Frequency
-  ELECHOUSE_cc1101.setDRate(4.8);     // Typical bitrate
-  ELECHOUSE_cc1101.setModulation(2);  // OOK mode
-  ELECHOUSE_cc1101.setPA(10);         // set power amplifier to 10dBm max
-  ELECHOUSE_cc1101.setRxBW(203);      // Narrow RX bandwidth
+    switch (ccBand) {
+    case BAND_433:
+      Serial.println("Init RX for 433 Mhz band..");
+
+      
+      ELECHOUSE_cc1101.setMHZ(433.92);    // Frequency
+      ELECHOUSE_cc1101.setDRate(4.8);     // Typical bitrate
+      ELECHOUSE_cc1101.setModulation(2);  // OOK mode
+      ELECHOUSE_cc1101.setPA(10);         // set power amplifier to 10dBm max
+      ELECHOUSE_cc1101.setRxBW(203);      // Narrow RX bandwidth
+      break;
+
+    case BAND_868:
+      Serial.println("Init RX for 868 Mhz band..");
+
+      ELECHOUSE_cc1101.setMHZ(868.3);     // Frequency
+      ELECHOUSE_cc1101.setDRate(17.24);   // Typical bitrate
+      ELECHOUSE_cc1101.setModulation(0);  // 2-FSK mode
+      ELECHOUSE_cc1101.setDeviation(40);  // 40kHz deviation for 2-FSK mode (test if better without, as used initially)
+      ELECHOUSE_cc1101.setPA(10);         // set power amplifier to 10dBm max
+      ELECHOUSE_cc1101.setRxBW(270);      // RX bandwidth
+      break;
+
+    default:
+      Serial.println("ERROR: Unknown band. Restarting..");
+      ESP.restart();
+      break;
+  }
+
   ELECHOUSE_cc1101.SetRx();  // put radio in receive mode
   delay(10);
 
@@ -163,7 +191,7 @@ void sendBurst(void) {
 
   unsigned long start = millis();
 
-  Serial.print("TRANSMITTING [");
+  Serial.print("TX: [");
   Serial.print(protocol);
   Serial.print("] ");
   Serial.println(message);
@@ -178,8 +206,9 @@ void sendBurst(void) {
 
   receive();
   delay(20);
-
-  Serial.println("TRANSMITTING DONE. RX MODE ON.");
+  #ifdef DEBUG_MODE
+    Serial.println("TRANSMITTING DONE. RX MODE ON.");
+  #endif
 }
 
 void loop() {
@@ -197,8 +226,6 @@ void loop() {
     char c = Serial.read();
     if (c == '\n' || c == '\r') {
       if (lastCmd.length() > 0) {
-        Serial.print("TXing last command: ");
-        Serial.println(lastCmd);
         sendBurst();
         lastCmd = "";  // clear buffer after sending
       }
