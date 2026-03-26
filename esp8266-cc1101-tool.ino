@@ -76,11 +76,11 @@ bool handleExtraCommand(const String &cmd) {
   if (command == "/band") {
     if (arg == "433") {
       ccBand = BAND_433;
-      Serial.println("OK. Switching to 433 MHz...");
+      Serial.println("OK. Switched to 433 MHz.");
       reset();
     } else if (arg == "868") {
       ccBand = BAND_868;
-      Serial.println("OK. Switching to 868 MHz...");
+      Serial.println("OK. Switched to 868 MHz.");
       reset();
     } else {
       Serial.println("Wrong arg. Usage: /band 433 | 868");
@@ -132,36 +132,34 @@ void showActivity(void) {
 #endif
 }
 
-// put radio in RX mode
-void receive(void) {
-  ccMode = RX_MODE;
-
-  pinMode(CC1101_GDO0, INPUT);  // GDO0 drives RX interrupt
+// configure radio
+void config(void) {
+  ELECHOUSE_cc1101.SpiStrobe(CC1101_SIDLE);  // disable RX/TX and idle
   delay(10);
-  ELECHOUSE_cc1101.Init();
+  ELECHOUSE_cc1101.Reset();              // reset chip
+  ELECHOUSE_cc1101.RegConfigSettings();  // apply default config
+  delay(10);
 
-  // Setup CC1101 and init RX
   switch (ccBand) {
     case BAND_433:
-      Serial.println("RX on 433 Mhz band");
-
+      // Serial.println("Config 433 Mhz band");
 
       ELECHOUSE_cc1101.setMHZ(433.92);    // Frequency
       ELECHOUSE_cc1101.setDRate(4.8);     // Typical bitrate
       ELECHOUSE_cc1101.setModulation(2);  // OOK mode
-      ELECHOUSE_cc1101.setPA(10);         // set power amplifier to 10dBm max
       ELECHOUSE_cc1101.setRxBW(203);      // Narrow RX bandwidth
+      ELECHOUSE_cc1101.setPA(10);         // set power amplifier to 10dBm max
       break;
 
     case BAND_868:
-      Serial.println("RX on 868 Mhz band");
+      // Serial.println("Config 868 Mhz band");
 
       ELECHOUSE_cc1101.setMHZ(868.3);     // Frequency
       ELECHOUSE_cc1101.setDRate(17.24);   // Typical bitrate
       ELECHOUSE_cc1101.setModulation(0);  // 2-FSK mode
       ELECHOUSE_cc1101.setDeviation(40);  // 40kHz deviation for 2-FSK mode (test if better without, as used initially)
-      ELECHOUSE_cc1101.setPA(10);         // set power amplifier to 10dBm max
       ELECHOUSE_cc1101.setRxBW(270);      // RX bandwidth
+      ELECHOUSE_cc1101.setPA(10);         // set power amplifier to 10dBm max
       break;
 
     default:
@@ -169,9 +167,23 @@ void receive(void) {
       ESP.restart();
       break;
   }
-
-  ELECHOUSE_cc1101.SetRx();  // put radio in receive mode
   delay(10);
+}
+
+// put radio in RX mode
+void receive(void) {
+  ccMode = RX_MODE;
+
+  pinMode(CC1101_GDO0, INPUT);  // GDO0 drives RX interrupt
+
+#ifdef LED_PIN
+  digitalWrite(LED_PIN, HIGH);
+#endif
+
+  config();
+  delay(5);
+  ELECHOUSE_cc1101.SetRx();  // put radio in receive mode
+  delay(50);
 
   rf.setCallback(rfCallback);
   rf.initReceiver(CC1101_GDO0);
@@ -180,36 +192,32 @@ void receive(void) {
 // put radio in TX mode
 void transmit(void) {
   ccMode = TX_MODE;
-  rf.disableReceiver();
-  delay(10);
+
+  detachInterrupt(digitalPinToInterrupt(CC1101_GDO0));  // detach interrupt
+  pinMode(CC1101_GDO0, OUTPUT);                         // drive TX pulses manually
+  digitalWrite(CC1101_GDO0, LOW);                       // put low
+
+  rf.disableReceiver();  // disable processing of incoming codes
 
 #ifdef LED_PIN
   digitalWrite(LED_PIN, LOW);
 #endif
 
-  detachInterrupt(digitalPinToInterrupt(CC1101_GDO0));  // detach interrupt
-  pinMode(CC1101_GDO0, OUTPUT);                         // drive TX pulses manually
-  digitalWrite(CC1101_GDO0, LOW);                       // put low
-  delay(10);
+  config();  // config radio
+  delay(5);
 
   ELECHOUSE_cc1101.SetTx();  // put radio in transmit mode
-  delay(10);
+  delay(50);
 }
 
-// reset radio
-void reset(void){
-  if(ccMode == RX_MODE)
-  {
+// reset radio into default RX state (detaches interrupts etc)
+void reset(void) {
+  if (ccMode == RX_MODE) {
     transmit();
-    delay(10);
     receive();
-  }
-  else if(ccMode == TX_MODE)
-  {
+  } else if (ccMode == TX_MODE) {
     receive();
-  }
-  else
-  {
+  } else {
     Serial.println("RESET ERROR: unknown ccMode.");
     ESP.restart();
   }
@@ -236,7 +244,9 @@ void setup() {
 
   Serial.println("Configuring CC1101...");
 
-  receive();
+  ELECHOUSE_cc1101.Init();  // init SPI etc (make sure to invoke only once!)
+
+  receive();  // start RX
 
   showCommands();
 
@@ -262,7 +272,6 @@ void sendBurst(void) {
   Serial.println(message);
 
   transmit();
-  delay(20);
   // keep sending code for 3 seconds
   while (millis() - start < 3000) {
     rf.send(protocol.c_str(), message.c_str());
@@ -270,7 +279,6 @@ void sendBurst(void) {
   }
 
   receive();
-  delay(20);
 #ifdef DEBUG_MODE
   Serial.println("TRANSMITTING DONE. RX MODE ON.");
 #endif
@@ -279,20 +287,18 @@ void sendBurst(void) {
 void loop() {
   // process input queue and may fire calllback
   if (ccMode == RX_MODE) {
-    rf.loop();
-    delay(2);
+    rf.loop();       // process incoming codes
+    showActivity();  // show any RX activity even if not understood - carrier detection
   }
 
-  // show any RX activity even if not understood - carrier detection
-  showActivity();
 
   // read serial input if available
   while (Serial.available() > 0) {
     char c = Serial.read();
     if (c == '\n' || c == '\r') {
       if (lastCmd.length() > 0) {
-        if (!handleExtraCommand(lastCmd)) { // handle extra command
-          sendBurst();  // fallback if no extra command detected it must be TX command
+        if (!handleExtraCommand(lastCmd)) {  // handle extra command
+          sendBurst();                       // fallback if no extra command detected it must be TX command
         }
         lastCmd = "";
       }
@@ -300,5 +306,5 @@ void loop() {
       lastCmd += c;
     }
   }
-  delay(5);
+  delay(1);
 }
