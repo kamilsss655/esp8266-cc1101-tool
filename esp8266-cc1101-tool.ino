@@ -108,7 +108,10 @@ void rfCallback(const String &protocol, const String &message, int status,
   // INVALID - message repeat is not equal to the previous message
   // VALID   - message is equal to the previous message
   // KNOWN   - repeat of a already valid message
-  if (status == VALID || status == FIRST) {
+
+  // for 433 band show only VALID codes to deduplicate
+  // for 868 show all since there are less duplicates
+  if ((status == VALID && ccBand == BAND_433) || ccBand == BAND_868) {
     Serial.print("RX: [");
     Serial.print(protocol);
     Serial.print("] ");
