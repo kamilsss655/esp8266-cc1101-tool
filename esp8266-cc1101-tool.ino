@@ -23,13 +23,13 @@ ESPiLight rf(CC1101_GDO0);
 
 enum CC1101Mode { RX_MODE,
                   TX_MODE };
-CC1101Mode ccMode = RX_MODE; // current mode
+CC1101Mode ccMode = RX_MODE;  // current mode
 
 enum CC1101Band {
   BAND_433,
   BAND_868
 };
-CC1101Band ccBand = BAND_868; // current band
+CC1101Band ccBand = BAND_868;  // current band
 
 // Buffer to hold last received command
 String lastCmd = "";
@@ -49,45 +49,87 @@ bool parseCommand(const String &input, String &protocol, String &message) {
   return true;
 }
 
+// show available commands
+void showCommands(void) {
+  Serial.println("\nTo send any code you can enter valid ESPiLight command ie:");
+  Serial.println("[elro_800_switch] {\"systemcode\":1,\"unitcode\":2,\"off\":1}");
+  Serial.println("Note that received codes have state format i.e \"state\":\"off\", so in order to replay received code you need to format command as \"off\":1 (as shown above)\n");
+
+  Serial.println("Available extra commands:");
+  Serial.println("/band 433 - switch to 433 band");
+  Serial.println("/band 868 - switch to 868 band\n");
+}
+
+// handle extra commands starting with /
+// /band 433 - switch to 433 band
+// /band 868 - switch to 868 band
+bool handleExtraCommand(const String &cmd) {
+  if (!cmd.startsWith("/")) return false;  // only handle extra commands starting with /
+
+  int spaceIdx = cmd.indexOf(' ');
+  String command = (spaceIdx == -1) ? cmd : cmd.substring(0, spaceIdx);
+  String arg = (spaceIdx == -1) ? "" : cmd.substring(spaceIdx + 1);
+
+  command.toLowerCase();
+  arg.trim();
+
+  if (command == "/band") {
+    if (arg == "433") {
+      ccBand = BAND_433;
+      Serial.println("OK. Switching to 433 MHz...");
+      reset();
+    } else if (arg == "868") {
+      ccBand = BAND_868;
+      Serial.println("OK. Switching to 868 MHz...");
+      reset();
+    } else {
+      Serial.println("Wrong arg. Usage: /band 433 | 868");
+    }
+    return true;
+  }
+
+  showCommands();  // show commands if cmd not found
+  return true;
+}
+
 // callback function. It is called on successfully received and parsed rc signal
 void rfCallback(const String &protocol, const String &message, int status,
                 size_t repeats, const String &deviceID) {
 
-  #ifdef DEBUG_MODE
-    Serial.print("RX: [");
-    Serial.print(protocol);
-    Serial.print("] ");
-    Serial.print(message);
-    Serial.println();
-  #else // show VALID or FIRST message only by default to prevent spam
+#ifdef DEBUG_MODE
+  Serial.print("RX: [");
+  Serial.print(protocol);
+  Serial.print("] ");
+  Serial.print(message);
+  Serial.println();
+#else  // show VALID or FIRST message only by default to prevent spam
   // status:
   // FIRST   - first message of this protocoll within the last 0.5 s
   // INVALID - message repeat is not equal to the previous message
   // VALID   - message is equal to the previous message
   // KNOWN   - repeat of a already valid message
-    if (status == VALID || status == FIRST) {
-      Serial.print("RX: [");
-      Serial.print(protocol);
-      Serial.print("] ");
-      Serial.print(message);
-      Serial.println();
-    }
-  #endif
+  if (status == VALID || status == FIRST) {
+    Serial.print("RX: [");
+    Serial.print(protocol);
+    Serial.print("] ");
+    Serial.print(message);
+    Serial.println();
+  }
+#endif
 }
 
 // this will reflect rf activity on led, so even if protocol is not understood the led will light up during RX
-void showActivity(void)
-{
-    #ifdef LED_PIN
-      if (digitalRead(CC1101_GDO0) == HIGH) {
-          digitalWrite(LED_PIN, LOW);
-      } 
-      else {
-          digitalWrite(LED_PIN, HIGH);
-      }
-    #endif
+void showActivity(void) {
+#ifdef LED_PIN
+  if (digitalRead(CC1101_GDO0) == HIGH) {
+    digitalWrite(LED_PIN, LOW);
+  } else {
+    digitalWrite(LED_PIN, HIGH);
+  }
+#endif
 }
 
+// put radio in RX mode
 void receive(void) {
   ccMode = RX_MODE;
 
@@ -96,11 +138,11 @@ void receive(void) {
   ELECHOUSE_cc1101.Init();
 
   // Setup CC1101 and init RX
-    switch (ccBand) {
+  switch (ccBand) {
     case BAND_433:
-      Serial.println("Init RX for 433 Mhz band..");
+      Serial.println("RX on 433 Mhz band");
 
-      
+
       ELECHOUSE_cc1101.setMHZ(433.92);    // Frequency
       ELECHOUSE_cc1101.setDRate(4.8);     // Typical bitrate
       ELECHOUSE_cc1101.setModulation(2);  // OOK mode
@@ -109,7 +151,7 @@ void receive(void) {
       break;
 
     case BAND_868:
-      Serial.println("Init RX for 868 Mhz band..");
+      Serial.println("RX on 868 Mhz band");
 
       ELECHOUSE_cc1101.setMHZ(868.3);     // Frequency
       ELECHOUSE_cc1101.setDRate(17.24);   // Typical bitrate
@@ -132,14 +174,15 @@ void receive(void) {
   rf.initReceiver(CC1101_GDO0);
 }
 
+// put radio in TX mode
 void transmit(void) {
   ccMode = TX_MODE;
   rf.disableReceiver();
   delay(10);
 
-  #ifdef LED_PIN
-    digitalWrite(LED_PIN, LOW);
-  #endif
+#ifdef LED_PIN
+  digitalWrite(LED_PIN, LOW);
+#endif
 
   detachInterrupt(digitalPinToInterrupt(CC1101_GDO0));  // detach interrupt
   pinMode(CC1101_GDO0, OUTPUT);                         // drive TX pulses manually
@@ -150,18 +193,36 @@ void transmit(void) {
   delay(10);
 }
 
-void setup() {
-  #ifdef LED_PIN
-    pinMode(LED_PIN, OUTPUT);                        
-    digitalWrite(LED_PIN, LOW);     
-  #endif
+// reset radio
+void reset(void){
+  if(ccMode == RX_MODE)
+  {
+    transmit();
+    delay(10);
+    receive();
+  }
+  else if(ccMode == TX_MODE)
+  {
+    receive();
+  }
+  else
+  {
+    Serial.println("RESET ERROR: unknown ccMode.");
+    ESP.restart();
+  }
+}
 
+void setup() {
+#ifdef LED_PIN
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+#endif
   Serial.begin(115200);
   delay(500);
 
-  #ifdef LED_PIN
-    digitalWrite(LED_PIN, HIGH);     
-  #endif
+#ifdef LED_PIN
+  digitalWrite(LED_PIN, HIGH);
+#endif
 
   // ELECHOUSE_cc1101.SetTx();  // cc1101 set Transmit on
   if (ELECHOUSE_cc1101.getCC1101()) {  // Check the CC1101 Spi connection.
@@ -174,18 +235,19 @@ void setup() {
 
   receive();
 
+  showCommands();
+
   Serial.println("CC1101 configured correctly!");
 
-  Serial.println("Received codes will show up here");
-
-  Serial.println("To send any code you can enter valid ESPiLight command ie: [elro_800_switch] {\"systemcode\":1,\"unitcode\":2,\"off\":1}");
+  Serial.println("Received codes will show up here: \n");
 }
 
 void sendBurst(void) {
   String protocol, message;
 
   if (!parseCommand(lastCmd, protocol, message)) {
-    Serial.println("Invalid command format!");
+    Serial.println("ERROR: Invalid command format!");
+    showCommands();
     return;
   }
 
@@ -201,14 +263,14 @@ void sendBurst(void) {
   // keep sending code for 3 seconds
   while (millis() - start < 3000) {
     rf.send(protocol.c_str(), message.c_str());
-    delay(5); // small gaps like real remote
+    delay(5);  // small gaps like real remote
   }
 
   receive();
   delay(20);
-  #ifdef DEBUG_MODE
-    Serial.println("TRANSMITTING DONE. RX MODE ON.");
-  #endif
+#ifdef DEBUG_MODE
+  Serial.println("TRANSMITTING DONE. RX MODE ON.");
+#endif
 }
 
 void loop() {
@@ -226,8 +288,10 @@ void loop() {
     char c = Serial.read();
     if (c == '\n' || c == '\r') {
       if (lastCmd.length() > 0) {
-        sendBurst();
-        lastCmd = "";  // clear buffer after sending
+        if (!handleExtraCommand(lastCmd)) { // handle extra command
+          sendBurst();  // fallback if no extra command detected it must be TX command
+        }
+        lastCmd = "";
       }
     } else {
       lastCmd += c;
