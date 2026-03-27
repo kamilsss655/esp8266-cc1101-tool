@@ -52,9 +52,9 @@ static void createMessage(int systemcode, int unitcode, int state) {
 	json_append_member(elro_800_switch->message, "systemcode", json_mknumber(systemcode, 0));
 	json_append_member(elro_800_switch->message, "unitcode", json_mknumber(unitcode, 0));
 	if(state == 0) {
-		json_append_member(elro_800_switch->message, "state", json_mkstring("on"));
+		json_append_member(elro_800_switch->message, "on", json_mknumber(1, 0));
 	} else {
-		json_append_member(elro_800_switch->message, "state", json_mkstring("off"));
+		json_append_member(elro_800_switch->message, "off", json_mknumber(1, 0));
 	}
 }
 

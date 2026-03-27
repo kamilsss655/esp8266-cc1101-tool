@@ -52,9 +52,9 @@ static void createMessage(int systemcode, int unitcode, int state) {
 	json_append_member(pollin->message, "systemcode", json_mknumber(systemcode, 0));
 	json_append_member(pollin->message, "unitcode", json_mknumber(unitcode, 0));
 	if(state == 0) {
-		json_append_member(pollin->message, "state", json_mkstring("on"));
+		json_append_member(pollin->message, "on", json_mknumber(1, 0));
 	} else {
-		json_append_member(pollin->message, "state", json_mkstring("off"));
+		json_append_member(pollin->message, "off", json_mknumber(1, 0));
 	}
 }
 

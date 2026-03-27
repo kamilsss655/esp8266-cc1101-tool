@@ -1,6 +1,6 @@
 # 🚀 esp8266-cc1101-tool
 
-A lightweight yet powerful **ESP8266 + CC1101 RF toolkit** for hacking, sniffing, and emulating sub-GHz devices.
+A lightweight yet powerful **ESP8266 + CC1101 RF toolkit** for sniffing, and emulating sub-GHz devices.
 
 Built on top of a modified **ESPiLight** library, this project lets you **receive and transmit multiple RF protocols** over **433 MHz and 868 MHz** using a simple **serial interface**.
 
@@ -9,6 +9,10 @@ Perfect for:
 - 🌦️ reading weather stations
 - 🔌 controlling RF sockets
 - 🧪 experimenting with sub-GHz communication
+
+> [!WARNING]
+> By using the firmware provided, users are responsible for ensuring compliance with all local laws and regulations governing the use of such technology. The author of the firmware shall not be held liable for any misuse or unlawful activities conducted by the user. It is the user's sole responsibility to use the firmware in a legal and responsible manner. By proceeding to use the firmware, users agree to abide by all applicable laws and regulations. Please note that this firmware has been created for scientific research purposes only.
+The firmware provided does not come with any form of warranty, express or implied. The author of the firmware shall not be held responsible for any damage caused as a result of using the firmware. By proceeding to use the firmware, users agree to do so at their own risk and understand that the author will not be liable for any adverse consequences that may arise. It is the user's responsibility to proceed with caution and understand the potential risks involved in using the firmware.
 
 ---
 
@@ -64,7 +68,7 @@ Thanks to ESPiLight, this tool supports a **wide range of RF protocols**, includ
 
 ## ⚙️ Getting Started
 
-1. Flash firmware to ESP8266
+1. Flash firmware to ESP8266 with Arduino IDE
 2. Open Serial Monitor at baud rate: 115200
 3. Start receiving RF signals instantly 🎉
 
@@ -83,7 +87,6 @@ The tool is fully controlled via **serial input**.
 15:56:16.419 -> 
 15:56:16.419 -> To send any code you can enter valid ESPiLight command ie:
 15:56:16.419 -> [elro_800_switch] {"systemcode":1,"unitcode":2,"off":1}
-15:56:16.419 -> Note that received codes have state format i.e "state":"off", so in order to replay received code you need to format command as "off":1 (as shown above)
 15:56:16.452 -> 
 15:56:16.452 -> Available extra commands:
 15:56:16.452 -> /band 433 - switch to 433 band
@@ -91,11 +94,11 @@ The tool is fully controlled via **serial input**.
 15:56:16.452 -> 
 15:56:16.452 -> CC1101 configured correctly!
 15:56:16.452 -> Received codes will show up here: 
-16:00:18.248 -> RX: [quigg_gt1000] {"id":22,"unit":3,"state":"on"}
+16:00:18.248 -> RX: [quigg_gt1000] {"id":22,"unit":3,"on":1}
 16:01:05.838 -> TX: [quigg_gt1000] {"id":22,"unit":3,"off":1}
 16:01:09.034 -> RX on 868 Mhz band
-16:02:54.074 -> RX: [quigg_gt1000] {"id":22,"unit":3,"state":"on"}
-16:03:02.794 -> RX: [quigg_gt1000] {"id":22,"unit":3,"state":"off"}
+16:02:54.074 -> RX: [quigg_gt1000] {"id":22,"unit":3,"on":1}
+16:03:02.794 -> RX: [quigg_gt1000] {"id":22,"unit":3,"off":1}
 ```
 
 
@@ -106,8 +109,8 @@ The tool is fully controlled via **serial input**.
 When a valid RF signal is detected:
 
 ```
-RX: [quigg_gt1000] {"id":22,"unit":3,"state":"on"}
-RX: [quigg_gt1000] {"id":22,"unit":3,"state":"off"}
+RX: [quigg_gt1000] {"id":22,"unit":3,"on":1}
+RX: [quigg_gt1000] {"id":22,"unit":3,"off":1}
 ```
 
 
@@ -118,11 +121,6 @@ RX: [quigg_gt1000] {"id":22,"unit":3,"state":"off"}
 To replay or send a signal:
 
 `[quigg_gt1000] {"id":22,"unit":3,"off":1}`
-
-
-⚠️ Note:
-- RX uses `"state":"on"`
-- TX requires `"on":1` or `"off":1`
 
 ---
 
@@ -174,14 +172,6 @@ RX on 433 Mhz band
 
 - Based on **ESPiLight**
 - Uses **SmartRC CC1101 Driver**
-- Built for RF hackers, tinkerers, and curious minds
+- Built for scientific research
 
 ---
-
-## 📜 License
-
-MIT
-
----
-
-> Turn your ESP8266 into a **universal RF hacking tool** 🔥

@@ -52,9 +52,9 @@ static void createMessage(int id, int unit, int state) {
 	json_append_member(arctech_switch_old->message, "id", json_mknumber(id, 0));
 	json_append_member(arctech_switch_old->message, "unit", json_mknumber(unit, 0));
 	if(state == 1)
-		json_append_member(arctech_switch_old->message, "state", json_mkstring("on"));
+		json_append_member(arctech_switch_old->message, "on", json_mknumber(1, 0));
 	else
-		json_append_member(arctech_switch_old->message, "state", json_mkstring("off"));
+		json_append_member(arctech_switch_old->message, "off", json_mknumber(1, 0));
 }
 
 static void parseCode(void) {

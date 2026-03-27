@@ -55,9 +55,9 @@ static void createMessage(int systemcode, int programcode, int state) {
 	json_append_member(rsl366->message, "systemcode", json_mknumber(systemcode, 0));
 	json_append_member(rsl366->message, "programcode", json_mknumber(programcode, 0));
 	if(state == 1) {
-		json_append_member(rsl366->message, "state", json_mkstring("on"));
+		json_append_member(rsl366->message, "on", json_mknumber(1, 0));
 	} else {
-		json_append_member(rsl366->message, "state", json_mkstring("off"));
+		json_append_member(rsl366->message, "off", json_mknumber(1, 0));
 	}
 }
 

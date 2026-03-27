@@ -69,9 +69,9 @@ static void createMessage(int id, int unit, int state, int all, int dimlevel, in
 	}
 
 	if(state == 1) {
-		json_append_member(arctech_dimmer->message, "state", json_mkstring("on"));
+		json_append_member(arctech_dimmer->message, "on", json_mknumber(1, 0));
 	} else {
-		json_append_member(arctech_dimmer->message, "state", json_mkstring("off"));
+		json_append_member(arctech_dimmer->message, "off", json_mknumber(1, 0));
 	}
 
 	if(learn == 1) {

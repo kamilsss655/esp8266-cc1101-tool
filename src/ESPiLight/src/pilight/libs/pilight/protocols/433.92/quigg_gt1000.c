@@ -212,9 +212,9 @@ static void createMessage(int id, int unit, int state, int seq, int learn) {
 	json_append_member(quigg_gt1000->message, "unit", json_mknumber(unit, 0));
 	json_append_member(quigg_gt1000->message, "seq", json_mknumber(seq, 0));
 	if(state == 1) {
-		json_append_member(quigg_gt1000->message, "state", json_mkstring("on"));
+		json_append_member(quigg_gt1000->message, "on", json_mknumber(1, 0));
 	} else {
-		json_append_member(quigg_gt1000->message, "state", json_mkstring("off"));
+		json_append_member(quigg_gt1000->message, "off", json_mknumber(1, 0));
 	}
 	json_append_member(quigg_gt1000->message, "code", json_mkstring(bincode));
 }

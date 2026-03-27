@@ -52,9 +52,9 @@ static void createMessage(int systemcode, int unitcode, int state) {
 	json_append_member(silvercrest->message, "systemcode", json_mknumber(systemcode, 0));
 	json_append_member(silvercrest->message, "unitcode", json_mknumber(unitcode, 0));
 	if(state == 0) {
-		json_append_member(silvercrest->message, "state", json_mkstring("on"));
+		json_append_member(silvercrest->message, "on", json_mknumber(1, 0));
 	} else {
-		json_append_member(silvercrest->message, "state", json_mkstring("off"));
+		json_append_member(silvercrest->message, "off", json_mknumber(1, 0));
 	}
 }
 

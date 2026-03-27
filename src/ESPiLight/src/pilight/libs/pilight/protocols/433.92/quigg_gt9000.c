@@ -140,9 +140,9 @@ static void createMessage(int *binary, int systemcode, int state, int unit) {
 	json_append_member(quigg_gt9000->message, "id", json_mknumber(systemcode, 0));
 	json_append_member(quigg_gt9000->message, "unit", json_mknumber(unit, 0));
 	if(state == 1) {
-		json_append_member(quigg_gt9000->message, "state", json_mkstring("on"));
+		json_append_member(quigg_gt9000->message, "on", json_mknumber(1, 0));
 	} else {
-		json_append_member(quigg_gt9000->message, "state", json_mkstring("off"));
+		json_append_member(quigg_gt9000->message, "off", json_mknumber(1, 0));
 	}
 }
 

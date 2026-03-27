@@ -61,9 +61,9 @@ static void createMessage(int id, int unit, int state, int learn) {
 	}
 	json_append_member(conrad_rsl_switch->message, "unit", json_mknumber(unit+1, 0));
 	if(state == 1) {
-		json_append_member(conrad_rsl_switch->message, "state", json_mkstring("on"));
+		json_append_member(conrad_rsl_switch->message, "on", json_mknumber(1, 0));
 	} else {
-		json_append_member(conrad_rsl_switch->message, "state", json_mkstring("off"));
+		json_append_member(conrad_rsl_switch->message, "off", json_mknumber(1, 0));
 	}
 	if(learn == 1) {
 		conrad_rsl_switch->txrpt = LEARN_REPEATS;

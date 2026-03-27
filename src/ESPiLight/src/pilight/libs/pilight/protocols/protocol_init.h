@@ -23,6 +23,7 @@ elro800ContactInit();
 elro800SwitchInit();
 eurodomestSwitchInit();
 ev1527Init();
+fanjuInit();
 heitechInit();
 impulsInit();
 iwds07Init();

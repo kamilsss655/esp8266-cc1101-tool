@@ -52,9 +52,9 @@ static void createMessage(int systemcode, int unitcode, int state) {
 	json_append_member(sc2262->message, "systemcode", json_mknumber(systemcode, 0));
 	json_append_member(sc2262->message, "unitcode", json_mknumber(unitcode, 0));
 	if(state == 0) {
-		json_append_member(sc2262->message, "state", json_mkstring("opened"));
+		json_append_member(sc2262->message, "opened", json_mknumber(1, 0));
 	} else {
-		json_append_member(sc2262->message, "state", json_mkstring("closed"));
+		json_append_member(sc2262->message, "closed", json_mknumber(1, 0));
 	}
 }
 

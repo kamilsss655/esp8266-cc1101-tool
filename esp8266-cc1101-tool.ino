@@ -1,8 +1,21 @@
 #include "src/ESPiLight/src/ESPiLight.h"
 #include "src/SmartRC-CC1101-Driver-Lib/ELECHOUSE_CC1101_SRC_DRV.h"
 
-// 2026 by kamilsss655
-// ESP8266 + CC1101 433Mhz Remote Debug Tool
+/* Copyright 2026 kamilsss655
+ * https://github.com/kamilsss655
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ */
 
 // HARDWARE CONNECTIONS:
 // esp8266 - cc1101
@@ -53,7 +66,6 @@ bool parseCommand(const String &input, String &protocol, String &message) {
 void showCommands(void) {
   Serial.println("\nTo send any code you can enter valid ESPiLight command ie:");
   Serial.println("[elro_800_switch] {\"systemcode\":1,\"unitcode\":2,\"off\":1}");
-  Serial.println("Note that received codes have state format i.e \"state\":\"off\", so in order to replay received code you need to format command as \"off\":1 (as shown above)\n");
 
   Serial.println("Available extra commands:");
   Serial.println("/band 433 - switch to 433 band");
