@@ -31,6 +31,7 @@
 #define CC1101_GDO0 4
 #define LED_PIN 2
 // #define DEBUG_MODE 1  // shows all packets
+#define NOISE_RSSI_WARMUPS 100 // define amount of noise floor measurements for the warmup (0-255)
 
 ESPiLight rf(CC1101_GDO0);
 
@@ -53,7 +54,12 @@ const char *bandToString[] = {
 String lastCmd = "";
 
 // RSSI monitoring variables
-int lastRssiMean = 0;
+int16_t lastRssiMean = -100;                        // signal rssi
+int16_t lastNoiseRssiMean = -100;                   // background noise rssi
+u_int8_t lastSNR = 0;                               // last signal to noise ratio
+u_int8_t noiseRssiWarmups = NOISE_RSSI_WARMUPS;     // amount of noise floor measurements for the warmup (0-255)
+const unsigned long noiseRssiUpdateInterval = 1000; // time in ms between rssi noise floor measurements
+unsigned long lastNoiseRssiUpdate = 0;              // last time noise floor rssi measured
 
 bool parseCommand(const String &input, String &protocol, String &message) {
   int start = input.indexOf('[');
@@ -131,8 +137,12 @@ void rfCallback(const String &protocol, const String &message, int status,
 #endif
     Serial.print("RX(BAND: ");
     Serial.print(bandToString[ccBand]);
+    Serial.print(" | SNR: ");
+    Serial.print(lastSNR);
     Serial.print(" | RSSI: ");
     Serial.print(lastRssiMean);
+    Serial.print(" | NOISE: ");
+    Serial.print(lastNoiseRssiMean);
     Serial.print("): [");
 
     Serial.print(protocol);
@@ -145,13 +155,37 @@ void rfCallback(const String &protocol, const String &message, int status,
 // monitor rssi
 void monitorRssi(void) {
   // if ((ELECHOUSE_cc1101.getMode() != 2) || (ccMode != RX_MODE)) return;  // exit if modem is not in RX mode
+  unsigned long now = millis();
 
-  bool signal = digitalRead(CC1101_GDO0);
-  int rssi = ELECHOUSE_cc1101.getRssi();
+  int16_t rssi = ELECHOUSE_cc1101.getRssi();
 
-  if (signal) {
-    lastRssiMean = (lastRssiMean + rssi)/2; // single pole filter averaging
+  // if incoming signal detected (RX carrier present) then measure signal rssi
+  if (digitalRead(CC1101_GDO0) == HIGH) {
+    lastRssiMean = ((40 * 100 * lastRssiMean) + (60 * 100 * rssi)) / (100 * 100); // fast IIR low pass filter (factor by 100 to prevent rounding errors)
   }
+
+  // measure rssiDiff
+  int16_t rssiDiff = rssi - lastNoiseRssiMean;
+
+  // if warm-up enabled
+  // add fragment of rssiDiff to current mean value - causing aggressive shift of the measured noise floor
+  // this is to quickly warm up noise floor measurement initially, as later on it is updated in a much smoother way
+  if(noiseRssiWarmups > 0) {
+    noiseRssiWarmups--;
+    lastNoiseRssiMean += rssiDiff / 5;
+  }
+
+  // periodically measure noise floor rssi - smooth
+  if (now - lastNoiseRssiUpdate > noiseRssiUpdateInterval) {
+    lastNoiseRssiUpdate = now;
+
+    // guarantee movement by 1
+    if (rssiDiff > 0) lastNoiseRssiMean++;
+    else if (rssiDiff < 0) lastNoiseRssiMean--;
+  }
+
+  // recalculate SNR
+  lastSNR = lastRssiMean - lastNoiseRssiMean;  // measurements are in dB so we can substract values
 }
 
 // this will reflect rf activity on led, so even if protocol is not understood the led will light up during RX
@@ -254,6 +288,8 @@ void reset(void) {
     Serial.println("RESET ERROR: unknown ccMode.");
     ESP.restart();
   }
+
+  noiseRssiWarmups = NOISE_RSSI_WARMUPS; // re-enable warm up - needed when switching bands etc
 }
 
 void setup() {
@@ -267,8 +303,7 @@ void setup() {
 #ifdef LED_PIN
   digitalWrite(LED_PIN, HIGH);
 #endif
-
-  // ELECHOUSE_cc1101.SetTx();  // cc1101 set Transmit on
+  Serial.println("\n\n");
   if (ELECHOUSE_cc1101.getCC1101()) {  // Check the CC1101 Spi connection.
     Serial.println("CC1101 detected OK");
   } else {
@@ -320,11 +355,11 @@ void sendBurst(void) {
 void loop() {
   // process input queue and may fire calllback
   if (ccMode == RX_MODE) {
-    rf.loop();       // process incoming codes
-    
+    rf.loop();  // process incoming codes
+
     showActivity();  // show any RX activity even if not understood - carrier detection
-    
-    monitorRssi();   // get rssi params from the radio environment
+
+    monitorRssi();  // get rssi params from the radio environment
 
     // read serial input if available
     while (Serial.available() > 0) {
