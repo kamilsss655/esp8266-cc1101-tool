@@ -68,7 +68,7 @@ Thanks to ESPiLight, this tool supports a **wide range of RF protocols**, includ
 
 ## ⚙️ Getting Started
 
-1. Flash firmware to ESP8266
+1. Flash firmware to ESP8266 with Arduino IDE
 2. Open Serial Monitor at baud rate: 115200
 3. Start receiving RF signals instantly 🎉
 
