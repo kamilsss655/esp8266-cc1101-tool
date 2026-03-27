@@ -23,6 +23,7 @@
 #include "433.92/elro_800_switch.h"
 #include "433.92/eurodomest_switch.h"
 #include "433.92/ev1527.h"
+#include "433.92/fanju.h"
 #include "433.92/heitech.h"
 #include "433.92/impuls.h"
 #include "433.92/iwds07.h"
