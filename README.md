@@ -173,5 +173,3 @@ RX on 433 Mhz band
 - Based on **ESPiLight**
 - Uses **SmartRC CC1101 Driver**
 - Built for scientific research
-
----
