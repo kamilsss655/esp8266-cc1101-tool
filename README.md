@@ -94,11 +94,11 @@ The tool is fully controlled via **serial input**.
 15:56:16.452 -> 
 15:56:16.452 -> CC1101 configured correctly!
 15:56:16.452 -> Received codes will show up here: 
-16:00:18.248 -> RX: [quigg_gt1000] {"id":22,"unit":3,"on":1}
+16:00:18.248 -> RX(BAND: 433 | SNR: 40 | RSSI: -33 | NOISE: -73): [quigg_gt1000] {"id":22,"unit":3,"on":1}
 16:01:05.838 -> TX: [quigg_gt1000] {"id":22,"unit":3,"off":1}
 16:01:09.034 -> RX on 868 Mhz band
-16:02:54.074 -> RX: [quigg_gt1000] {"id":22,"unit":3,"on":1}
-16:03:02.794 -> RX: [quigg_gt1000] {"id":22,"unit":3,"off":1}
+16:02:54.074 -> RX(BAND: 433 | SNR: 40 | RSSI: -33 | NOISE: -73): [quigg_gt1000] {"id":22,"unit":3,"on":1}
+16:03:02.794 -> RX(BAND: 433 | SNR: 40 | RSSI: -33 | NOISE: -73): [quigg_gt1000] {"id":22,"unit":3,"off":1}
 ```
 
 
@@ -109,8 +109,8 @@ The tool is fully controlled via **serial input**.
 When a valid RF signal is detected:
 
 ```
-RX: [quigg_gt1000] {"id":22,"unit":3,"on":1}
-RX: [quigg_gt1000] {"id":22,"unit":3,"off":1}
+RX(BAND: 433 | SNR: 40 | RSSI: -33 | NOISE: -73): [quigg_gt1000] {"id":22,"unit":3,"on":1}
+RX(BAND: 433 | SNR: 40 | RSSI: -33 | NOISE: -73): [quigg_gt1000] {"id":22,"unit":3,"off":1}
 ```
 
 
