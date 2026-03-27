@@ -60,9 +60,9 @@ static void createMessage(int id, int unit, int state, int all) {
 	}
 
 	if(state == 1) {
-		json_append_member(arctech_contact->message, "state", json_mkstring("opened"));
+		json_append_member(arctech_contact->message, "opened", json_mknumber(1, 0));
 	} else {
-		json_append_member(arctech_contact->message, "state", json_mkstring("closed"));
+		json_append_member(arctech_contact->message, "closed", json_mknumber(1, 0));
 	}
 }
 

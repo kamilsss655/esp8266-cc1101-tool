@@ -72,7 +72,7 @@ static void parseCode(void) {
 
 	secudo_smoke->message = json_mkobject();
 	json_append_member(secudo_smoke->message, "id", json_mknumber(id, 0));
-	json_append_member(secudo_smoke->message, "state", json_mkstring("alarm"));
+	json_append_member(secudo_smoke->message, "alarm", json_mknumber(1, 0));
 }
 
 #if !defined(MODULE) && !defined(_WIN32)

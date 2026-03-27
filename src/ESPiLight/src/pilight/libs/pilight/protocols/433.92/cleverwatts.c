@@ -56,9 +56,9 @@ static void createMessage(int id, int unit, int state, int all) {
 		json_append_member(cleverwatts->message, "unit", json_mknumber(unit, 0));
 	}
 	if(state == 0)
-		json_append_member(cleverwatts->message, "state", json_mkstring("on"));
+		json_append_member(cleverwatts->message, "on", json_mknumber(1, 0));
 	else
-		json_append_member(cleverwatts->message, "state", json_mkstring("off"));
+		json_append_member(cleverwatts->message, "off", json_mknumber(1, 0));
 }
 
 static void parseCode(void) {

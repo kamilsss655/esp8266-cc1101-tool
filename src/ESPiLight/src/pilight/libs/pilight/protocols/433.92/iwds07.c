@@ -43,15 +43,15 @@ static void createMessage(int unit, int alert, int state, int fault) {
 
     if(alert == 0) {
         if(fault == 1) {
-            json_append_member(iwds07->message, "state", json_mkstring("tamped"));
+            json_append_member(iwds07->message, "tamped", json_mknumber(1, 0));
         } else {
-            json_append_member(iwds07->message, "state", json_mkstring("low"));
+            json_append_member(iwds07->message, "low", json_mknumber(1, 0));
         }
     } else {
         if(state == 1) {
-            json_append_member(iwds07->message, "state", json_mkstring("closed"));
+            json_append_member(iwds07->message, "closed", json_mknumber(1, 0));
         } else {
-            json_append_member(iwds07->message, "state", json_mkstring("opened"));
+            json_append_member(iwds07->message, "opened", json_mknumber(1, 0));
         }
     }
 }

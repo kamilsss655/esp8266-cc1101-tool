@@ -67,10 +67,10 @@ static void createMessage(unsigned long long systemcode, int unitcode, int state
 	}
 	//aka command
 	if(state == 1) {
-		json_append_member(elro_300_switch->message, "state", json_mkstring("on"));
+		json_append_member(elro_300_switch->message, "on", json_mknumber(1, 0));
 	}
 	else if(state == 2) {
-		json_append_member(elro_300_switch->message, "state", json_mkstring("off"));
+		json_append_member(elro_300_switch->message, "off", json_mknumber(1, 0));
 	}
 }
 

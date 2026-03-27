@@ -52,9 +52,9 @@ static void createMessage(int id, int unit, int state, int all, int learn) {
 	}
 
 	if(state == 1) {
-		json_append_member(smartwares_switch->message, "state", json_mkstring("on"));
+		json_append_member(smartwares_switch->message, "on", json_mknumber(1, 0));
 	} else {
-		json_append_member(smartwares_switch->message, "state", json_mkstring("off"));
+		json_append_member(smartwares_switch->message, "off", json_mknumber(1, 0));
 	}
 
 	if(learn == 1) {

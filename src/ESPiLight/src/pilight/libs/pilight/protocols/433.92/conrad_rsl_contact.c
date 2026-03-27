@@ -50,9 +50,9 @@ static void createMessage(int id, int state) {
 	conrad_rsl_contact->message = json_mkobject();
 	json_append_member(conrad_rsl_contact->message, "id", json_mknumber(id, 0));
 	if(state == 1) {
-		json_append_member(conrad_rsl_contact->message, "state", json_mkstring("opened"));
+		json_append_member(conrad_rsl_contact->message, "opened", json_mknumber(1, 0));
 	} else {
-		json_append_member(conrad_rsl_contact->message, "state", json_mkstring("closed"));
+		json_append_member(conrad_rsl_contact->message, "closed", json_mknumber(1, 0));
 	}
 }
 

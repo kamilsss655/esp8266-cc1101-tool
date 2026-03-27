@@ -65,9 +65,9 @@ static void createMessage(int id, int state, int unit, int all, int learn) {
 	}
 
 	if(state == 1) {
-		json_append_member(quigg_gt7000->message, "state", json_mkstring("on"));
+		json_append_member(quigg_gt7000->message, "on", json_mknumber(1, 0));
 	} else {
-		json_append_member(quigg_gt7000->message, "state", json_mkstring("off"));
+		json_append_member(quigg_gt7000->message, "off", json_mknumber(1, 0));
 	}
 
 	if(learn == 1) {

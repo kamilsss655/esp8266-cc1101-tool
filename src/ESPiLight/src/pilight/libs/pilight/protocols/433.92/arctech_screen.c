@@ -60,9 +60,9 @@ static void createMessage(int id, int unit, int state, int all, int learn) {
 	}
 
 	if(state == 1) {
-		json_append_member(arctech_screen->message, "state", json_mkstring("up"));
+		json_append_member(arctech_screen->message, "up", json_mknumber(1, 0));
 	} else {
-		json_append_member(arctech_screen->message, "state", json_mkstring("down"));
+		json_append_member(arctech_screen->message, "down", json_mknumber(1, 0));
 	}
 
 	if(learn == 1) {

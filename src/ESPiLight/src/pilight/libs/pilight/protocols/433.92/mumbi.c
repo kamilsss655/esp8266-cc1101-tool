@@ -52,9 +52,9 @@ static void createMessage(int systemcode, int unitcode, int state) {
 	json_append_member(mumbi->message, "systemcode", json_mknumber(systemcode, 0));
 	json_append_member(mumbi->message, "unitcode", json_mknumber(unitcode, 0));
 	if(state == 1) {
-		json_append_member(mumbi->message, "state", json_mkstring("on"));
+		json_append_member(mumbi->message, "on", json_mknumber(1, 0));
 	} else {
-		json_append_member(mumbi->message, "state", json_mkstring("off"));
+		json_append_member(mumbi->message, "off", json_mknumber(1, 0));
 	}
 }
 

@@ -51,9 +51,9 @@ static void createMessage(int unitcode, int state) {
 	ev1527->message = json_mkobject();
 	json_append_member(ev1527->message, "unitcode", json_mknumber(unitcode, 0));
 	if(state == 0) {
-		json_append_member(ev1527->message, "state", json_mkstring("opened"));
+		json_append_member(ev1527->message, "opened", json_mknumber(1, 0));
 	} else {
-		json_append_member(ev1527->message, "state", json_mkstring("closed"));
+		json_append_member(ev1527->message, "closed", json_mknumber(1, 0));
 	}
 }
 

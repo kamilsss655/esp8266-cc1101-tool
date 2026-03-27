@@ -65,9 +65,9 @@ static void createMessage(int id, int state, int unit, int all, int learn) {
 		json_append_member(quigg_screen->message, "unit", json_mknumber(unit, 0));
 	}
 	if(state==0) {
-		json_append_member(quigg_screen->message, "state", json_mkstring("up"));
+		json_append_member(quigg_screen->message, "up", json_mknumber(1, 0));
 	} else {
-		json_append_member(quigg_screen->message, "state", json_mkstring("down"));
+		json_append_member(quigg_screen->message, "down", json_mknumber(1, 0));
 	}
 
 	if(learn == 1) {

@@ -53,9 +53,9 @@ static void createMessage(char *id, int state) {
 	x10->message = json_mkobject();
 	json_append_member(x10->message, "id", json_mkstring(id));
 	if(state == 0) {
-		json_append_member(x10->message, "state", json_mkstring("on"));
+		json_append_member(x10->message, "on", json_mknumber(1, 0));
 	} else {
-		json_append_member(x10->message, "state", json_mkstring("off"));
+		json_append_member(x10->message, "off", json_mknumber(1, 0));
 	}
 }
 

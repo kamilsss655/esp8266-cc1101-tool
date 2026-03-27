@@ -52,9 +52,9 @@ static void createMessage(char *id, int unit, int state) {
 	json_append_member(rev2_switch->message, "id", json_mkstring(id));
 	json_append_member(rev2_switch->message, "unit", json_mknumber(unit, 0));
 	if(state == 2)
-		json_append_member(rev2_switch->message, "state", json_mkstring("on"));
+		json_append_member(rev2_switch->message, "on", json_mknumber(1, 0));
 	else
-		json_append_member(rev2_switch->message, "state", json_mkstring("off"));
+		json_append_member(rev2_switch->message, "off", json_mknumber(1, 0));
 }
 
 static void parseCode(void) {

@@ -57,9 +57,9 @@ static void createMessage(int id, int unit, int state, int all) {
 	}
 
 	if(state == 1) {
-		json_append_member(arctech_dusk->message, "state", json_mkstring("dusk"));
+		json_append_member(arctech_dusk->message, "dusk", json_mknumber(1, 0));
 	} else {
-		json_append_member(arctech_dusk->message, "state", json_mkstring("dawn"));
+		json_append_member(arctech_dusk->message, "dawn", json_mknumber(1, 0));
 	}
 }
 
