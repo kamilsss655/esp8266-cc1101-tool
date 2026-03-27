@@ -53,12 +53,7 @@ const char *bandToString[] = {
 String lastCmd = "";
 
 // RSSI monitoring variables
-int rssiSum = 0;
-int rssiCount = 0;
 int lastRssiMean = 0;
-bool packetActive = false;
-unsigned long lastSignalTime = 0;
-const unsigned long SIGNAL_HOLD_MS = 5;  // grace period for rssi measurement time window
 
 bool parseCommand(const String &input, String &protocol, String &message) {
   int start = input.indexOf('[');
@@ -153,32 +148,9 @@ void monitorRssi(void) {
 
   bool signal = digitalRead(CC1101_GDO0);
   int rssi = ELECHOUSE_cc1101.getRssi();
-  unsigned long now = millis();
 
   if (signal) {
-    // mark packet active
-    packetActive = true;
-    lastSignalTime = now;
-
-    // collect RSSI
-    rssiSum += rssi;
-    rssiCount++;
-  }
-
-  // check if packet ended (no signal for some time)
-  if (packetActive && (now - lastSignalTime > SIGNAL_HOLD_MS)) {
-
-    if (rssiCount > 0) {
-      lastRssiMean = rssiSum / rssiCount;
-    }
-
-    // Serial.print("rssiCount: ");
-    // Serial.println(rssiCount);
-
-    // reset
-    rssiSum = 0;
-    rssiCount = 0;
-    packetActive = false;
+    lastRssiMean = (lastRssiMean + rssi)/2; // single pole filter averaging
   }
 }
 
