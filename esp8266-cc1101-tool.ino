@@ -30,7 +30,7 @@
 
 #define CC1101_GDO0 4
 #define LED_PIN 2
-// #define DEBUG_MODE 1 // shows all packets
+// #define DEBUG_MODE 1  // shows all packets
 
 ESPiLight rf(CC1101_GDO0);
 
@@ -44,8 +44,21 @@ enum CC1101Band {
 };
 CC1101Band ccBand = BAND_868;  // current band
 
+const char *bandToString[] = {
+  "433",
+  "868"
+};
+
 // Buffer to hold last received command
 String lastCmd = "";
+
+// RSSI monitoring variables
+int rssiSum = 0;
+int rssiCount = 0;
+int lastRssiMean = 0;
+bool packetActive = false;
+unsigned long lastSignalTime = 0;
+const unsigned long SIGNAL_HOLD_MS = 5;  // grace period for rssi measurement time window
 
 bool parseCommand(const String &input, String &protocol, String &message) {
   int start = input.indexOf('[');
@@ -105,32 +118,68 @@ bool handleExtraCommand(const String &cmd) {
 }
 
 // callback function. It is called on successfully received and parsed rc signal
+// status:
+// FIRST   - first message of this protocoll within the last 0.5 s
+// INVALID - message repeat is not equal to the previous message
+// VALID   - message is equal to the previous message
+// KNOWN   - repeat of a already valid message
 void rfCallback(const String &protocol, const String &message, int status,
                 size_t repeats, const String &deviceID) {
 
 #ifdef DEBUG_MODE
-  Serial.print("RX: [");
-  Serial.print(protocol);
-  Serial.print("] ");
-  Serial.print(message);
-  Serial.println();
-#else  // show VALID or FIRST message only by default to prevent spam
-  // status:
-  // FIRST   - first message of this protocoll within the last 0.5 s
-  // INVALID - message repeat is not equal to the previous message
-  // VALID   - message is equal to the previous message
-  // KNOWN   - repeat of a already valid message
-
+  if (true) {  // show all in debug
+#else
+  // show VALID or FIRST message only by default to prevent spam
   // for 433 band show only VALID codes to deduplicate
   // for 868 show all since there are less duplicates
   if ((status == VALID && ccBand == BAND_433) || ccBand == BAND_868) {
-    Serial.print("RX: [");
+#endif
+    Serial.print("RX(BAND: ");
+    Serial.print(bandToString[ccBand]);
+    Serial.print(" | RSSI: ");
+    Serial.print(lastRssiMean);
+    Serial.print("): [");
+
     Serial.print(protocol);
     Serial.print("] ");
     Serial.print(message);
     Serial.println();
   }
-#endif
+}
+
+// monitor rssi
+void monitorRssi(void) {
+  // if ((ELECHOUSE_cc1101.getMode() != 2) || (ccMode != RX_MODE)) return;  // exit if modem is not in RX mode
+
+  bool signal = digitalRead(CC1101_GDO0);
+  int rssi = ELECHOUSE_cc1101.getRssi();
+  unsigned long now = millis();
+
+  if (signal) {
+    // mark packet active
+    packetActive = true;
+    lastSignalTime = now;
+
+    // collect RSSI
+    rssiSum += rssi;
+    rssiCount++;
+  }
+
+  // check if packet ended (no signal for some time)
+  if (packetActive && (now - lastSignalTime > SIGNAL_HOLD_MS)) {
+
+    if (rssiCount > 0) {
+      lastRssiMean = rssiSum / rssiCount;
+    }
+
+    // Serial.print("rssiCount: ");
+    // Serial.println(rssiCount);
+
+    // reset
+    rssiSum = 0;
+    rssiCount = 0;
+    packetActive = false;
+  }
 }
 
 // this will reflect rf activity on led, so even if protocol is not understood the led will light up during RX
@@ -300,23 +349,26 @@ void loop() {
   // process input queue and may fire calllback
   if (ccMode == RX_MODE) {
     rf.loop();       // process incoming codes
+    
     showActivity();  // show any RX activity even if not understood - carrier detection
-  }
+    
+    monitorRssi();   // get rssi params from the radio environment
 
-
-  // read serial input if available
-  while (Serial.available() > 0) {
-    char c = Serial.read();
-    if (c == '\n' || c == '\r') {
-      if (lastCmd.length() > 0) {
-        if (!handleExtraCommand(lastCmd)) {  // handle extra command
-          sendBurst();                       // fallback if no extra command detected it must be TX command
+    // read serial input if available
+    while (Serial.available() > 0) {
+      char c = Serial.read();
+      if (c == '\n' || c == '\r') {
+        if (lastCmd.length() > 0) {
+          if (!handleExtraCommand(lastCmd)) {  // handle extra command
+            sendBurst();                       // fallback if no extra command detected it must be TX command
+          }
+          lastCmd = "";
         }
-        lastCmd = "";
+      } else {
+        lastCmd += c;
       }
-    } else {
-      lastCmd += c;
     }
+
+    delay(1);
   }
-  delay(1);
 }
