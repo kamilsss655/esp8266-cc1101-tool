@@ -185,7 +185,12 @@ void monitorRssi(void) {
   }
 
   // recalculate SNR
-  lastSNR = lastRssiMean - lastNoiseRssiMean;  // measurements are in dB so we can substract values
+  if(lastRssiMean > lastNoiseRssiMean) {
+    lastSNR = lastRssiMean - lastNoiseRssiMean;  // measurements are in dB so we can substract values
+  }
+  else {
+    lastSNR = 0;
+  }
 }
 
 // this will reflect rf activity on led, so even if protocol is not understood the led will light up during RX
